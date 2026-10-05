@@ -2,6 +2,7 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import plotly.express as px
+import os
 
 # Page configuration
 st.set_page_config(
@@ -10,10 +11,14 @@ st.set_page_config(
     layout="wide"
 )
 
+# Get absolute path to database file so it resolves on both local machine and Streamlit Cloud
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "database", "superstore.db")
+
 # Connect to SQLite database
 @st.cache_data
 def load_data():
-    conn = sqlite3.connect("database/superstore.db")
+    conn = sqlite3.connect(DB_PATH)
     
     # Query monthly summary
     df_summary = pd.read_sql_query("SELECT * FROM monthly_sales_summary", conn)
@@ -21,7 +26,7 @@ def load_data():
     # Query forecasts if available
     try:
         df_forecast = pd.read_sql_query("SELECT * FROM sales_forecasts", conn)
-    except:
+    except Exception:
         df_forecast = pd.DataFrame()
         
     conn.close()
@@ -121,7 +126,7 @@ with st.expander("🔍 SQL Query Playground (Query SQLite Live)"):
     )
     if st.button("Run SQL Query"):
         try:
-            conn = sqlite3.connect("database/superstore.db")
+            conn = sqlite3.connect(DB_PATH)
             query_result = pd.read_sql_query(user_query, conn)
             conn.close()
             st.dataframe(query_result)
